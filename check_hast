@@ -1,0 +1,38 @@
+#!/bin/sh
+
+if [ $# -ne 1 ] ; then
+	echo "please specify exactly one argument: provider's name" 1>&2
+	exit 3
+fi
+
+status="`hastctl status $1`"
+if echo "$status" | grep -q "role: primary" ; then
+	if echo "$status" | grep -q "status: complete" ; then
+		if echo "$status" | grep -q "dirty: 0 (" ; then
+			echo OK - $1: primary role, clean
+			exit 0
+		else
+			echo WARNING - $1: primary role, dirty
+			exit 1
+		fi
+	else
+		echo CRITICAL - $1: primary role, incomplete
+		exit 2
+	fi
+elif echo "$status" | grep -q "role: secondary" ; then
+	if echo "$status" | grep -q "status: complete" ; then
+		if echo "$status" | grep -q "dirty: 0 (" ; then
+			echo OK - $1: secondary role, clean
+			exit 0
+		else
+			echo WARNING - $1: secondary role, dirty
+			exit 1
+		fi
+	else
+		echo CRITICAL - $1: secondary role, incomplete
+		exit 2
+	fi
+else
+	echo UNKNOWN - $1: unkown role
+	exit 3
+fi
